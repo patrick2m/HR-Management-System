@@ -33,14 +33,10 @@ cd HR.Infrastructure
 dotnet add package Microsoft.EntityFrameworkCore
 dotnet add package Microsoft.EntityFrameworkCore.Design
 dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
-
 cd..
-cd HR.Domain
-mkdir Entities
-cd Entities
+dotnet add HR.API package Swashbuckle.AspNetCore
 
-
-
+dotnet tool install --global dotnet-ef
 
 
 
