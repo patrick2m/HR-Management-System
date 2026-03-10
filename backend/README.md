@@ -31,6 +31,10 @@ Start the application
 
   docker compose up --build
 
+Testing the application
+
+  dotnet test
+
 The API will be availabe at
 
   http://localhost:8080/swagger

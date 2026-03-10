@@ -17,9 +17,21 @@ public class EmployeesController : ControllerBase
   }
 
   [HttpGet]
-  public async Task<List<Employee>> Get()
+  public async Task<IActionResult> GetAll()
   {
-    return await _context.Employees.ToListAsync();
+    var employees = await _context.Employees.ToListAsync();
+    return Ok(employees);
+  }
+
+  [HttpGet("{id}")]
+  public async Task<IActionResult> GetById(int id)
+  {
+    var employee = await _context.Employees.FindAsync(id);
+
+    if (employee == null)
+      return NotFound();
+
+    return Ok(employee);
   }
 
   [HttpPost]
@@ -28,6 +40,37 @@ public class EmployeesController : ControllerBase
     _context.Employees.Add(employee);
     await _context.SaveChangesAsync();
     
-    return Ok(employee);    
+    return CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee);
+  }
+
+  [HttpPut("{id}")]
+  public async Task<IActionResult> Update(Guid id, Employee updated)
+  {
+    var employee = await _context.Employees.FindAsync(id);
+
+    if (employee == null)
+      return NotFound();
+    
+    employee.Name = updated.Name;
+    employee.Email = updated.Email;
+    employee.Salary = updated.Salary;
+
+    await _context.SaveChangesAsync();
+
+    return NoContent();
+  }
+
+  [HttpDelete("{id}")]
+  public async Task<IActionResult> Delete(Guid id)
+  {
+    var employee = await _context.Employees.FindAsync(id);
+
+    if (employee == null)
+      return NotFound();
+    
+    _context.Employees.Remove(employee);
+    await _context.SaveChangesAsync();
+
+    return NoContent();
   }
 }
