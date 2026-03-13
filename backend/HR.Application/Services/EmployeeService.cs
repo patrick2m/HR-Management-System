@@ -4,19 +4,18 @@ using HR.Domain.Entities;
 using HR.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using HR.Infrastructure.Messaging;
-using HR.Application.Events;
 
 namespace HR.Application.Services;
 
 public class EmployeeService : IEmployeeService
 {
   private readonly AppDbContext _context;
-  private readonly KafkaProducer _producer;
+  private readonly KafkaProducer _kafka;
 
-  public EmployeeService(AppDbContext context, KafkaProducer producer)
+  public EmployeeService(AppDbContext context, KafkaProducer kafka)
   {
     _context = context;
-    _producer = producer;
+    _kafka = kafka;
   }
 
   public async Task<List<EmployeeDto>> GetAllAsync()
@@ -63,20 +62,16 @@ public class EmployeeService : IEmployeeService
     };
 
     _context.Employees.Add(employee);
-
     await _context.SaveChangesAsync();
 
-    var employeeEvent = new EmployeeCreatedEvent
+    await _kafka.PublishAsync("employee-created", new
     {
-      Id = employee.Id,
-      Name = employee.Name,
-      Email = employee.Email,
-      Position = employee.Position,
-      Salary = employee.Salary,
-      CreatedAt = employee.CreatedAt
-    };
-
-    await _producer.ProduceAsync("employee-created", employeeEvent);
+      employee.Id,
+      employee.Name,
+      employee.Email,
+      employee.Position,
+      employee.Salary
+    });
 
     return employee.Id;
   }

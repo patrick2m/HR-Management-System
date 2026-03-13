@@ -1,27 +1,27 @@
-using System.Text.Json;
 using Confluent.Kafka;
+using System.Text.Json;
 
 namespace HR.Infrastructure.Messaging;
 
 public class KafkaProducer
 {
-  private readonly ProducerConfig _config;
+  private readonly IProducer<string, string> _producer;
 
   public KafkaProducer()
   {
-    _config = new ProducerConfig
+    var config = new ProducerConfig
     {
       BootstrapServers = "kafka:9092"
     };
+
+    _producer = new ProducerBuilder<string, string>(config).Build();
   }
 
-  public async Task ProduceAsync(string topic, object message)
+  public async Task PublishAsync<T>(string topic, T message)
   {
-    using var producer = new ProducerBuilder<string, string>(_config).Build();
-
     var json = JsonSerializer.Serialize(message);
 
-    await producer.ProduceAsync(topic, new Message<string, string>
+    await _producer.ProduceAsync(topic, new Message<string, string>
     {
       Key = Guid.NewGuid().ToString(),
       Value = json
