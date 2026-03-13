@@ -1,19 +1,22 @@
-using System.Runtime.Serialization;
 using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using HR.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using HR.Infrastructure.Messaging;
+using HR.Application.Events;
 
 namespace HR.Application.Services;
 
 public class EmployeeService : IEmployeeService
 {
   private readonly AppDbContext _context;
+  private readonly KafkaProducer _producer;
 
-  public EmployeeService(AppDbContext context)
+  public EmployeeService(AppDbContext context, KafkaProducer producer)
   {
     _context = context;
+    _producer = producer;
   }
 
   public async Task<List<EmployeeDto>> GetAllAsync()
@@ -62,6 +65,18 @@ public class EmployeeService : IEmployeeService
     _context.Employees.Add(employee);
 
     await _context.SaveChangesAsync();
+
+    var employeeEvent = new EmployeeCreatedEvent
+    {
+      Id = employee.Id,
+      Name = employee.Name,
+      Email = employee.Email,
+      Position = employee.Position,
+      Salary = employee.Salary,
+      CreatedAt = employee.CreatedAt
+    };
+
+    await _producer.ProduceAsync("employee-created", employeeEvent);
 
     return employee.Id;
   }

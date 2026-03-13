@@ -1,4 +1,7 @@
+using HR.Application.Interfaces;
+using HR.Application.Services;
 using HR.Infrastructure.Data;
+using HR.Infrastructure.Messaging;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +15,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddHealthChecks();
+
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+
+builder.Services.AddSingleton<KafkaProducer>();
 
 var app = builder.Build();
 
