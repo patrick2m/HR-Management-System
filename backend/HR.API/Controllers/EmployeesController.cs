@@ -1,32 +1,30 @@
+using HR.Application.DTOs;
+using HR.Application.Interfaces;
 using HR.Domain.Entities;
-using HR.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HR.API.Controllers;
 
 [ApiController]
-[Route("employees")]
+[Route("api/[controller]")]
 public class EmployeesController : ControllerBase
 {
-  private readonly AppDbContext _context;
+  private readonly IEmployeeService _service;
 
-  public EmployeesController(AppDbContext context)
+  public EmployeesController(IEmployeeService service)
   {
-    _context = context;
+    _service = service;
   }
 
   [HttpGet]
-  public async Task<IActionResult> GetAll()
-  {
-    var employees = await _context.Employees.ToListAsync();
-    return Ok(employees);
-  }
+  public async Task<IActionResult> Get()
+    => Ok(await _service.GetAllAsync());
 
   [HttpGet("{id}")]
-  public async Task<IActionResult> GetById(int id)
+  public async Task<IActionResult> GetById(Guid id)
   {
-    var employee = await _context.Employees.FindAsync(id);
+    var employee = await _service.GetByIdAsync(id);
 
     if (employee == null)
       return NotFound();
@@ -35,41 +33,30 @@ public class EmployeesController : ControllerBase
   }
 
   [HttpPost]
-  public async Task<IActionResult> Create(Employee employee)
+  public async Task<IActionResult> Create(CreateEmployeeDto dto)
   {
-    _context.Employees.Add(employee);
-    await _context.SaveChangesAsync();
-    
-    return CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee);
+    var id = await _service.CreateAsync(dto);
+    return CreatedAtAction(nameof(GetById), new { id = id }, dto);
   }
 
   [HttpPut("{id}")]
-  public async Task<IActionResult> Update(Guid id, Employee updated)
+  public async Task<IActionResult> Update(Guid id, UpdateEmployeeDto dto)
   {
-    var employee = await _context.Employees.FindAsync(id);
+    var updated = await _service.UpdateAsync(id, dto);
 
-    if (employee == null)
+    if (!updated)
       return NotFound();
     
-    employee.Name = updated.Name;
-    employee.Email = updated.Email;
-    employee.Salary = updated.Salary;
-
-    await _context.SaveChangesAsync();
-
     return NoContent();
   }
 
   [HttpDelete("{id}")]
   public async Task<IActionResult> Delete(Guid id)
   {
-    var employee = await _context.Employees.FindAsync(id);
+    var deleted = await _service.DeleteAsync(id);
 
-    if (employee == null)
+    if (!deleted)
       return NotFound();
-    
-    _context.Employees.Remove(employee);
-    await _context.SaveChangesAsync();
 
     return NoContent();
   }

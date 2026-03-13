@@ -1,4 +1,4 @@
-using HR.Infrastructure.Persistence;
+using HR.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,7 +17,7 @@ var app = builder.Build();
 
 app.MapHealthChecks("/health");
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
